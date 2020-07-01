@@ -8,6 +8,15 @@ module ConnectFour
             @slots = Array.new(Array.new(6) { Array.new(7) { slot ? slot : Slot.new } })
         end
 
+        def rows
+            @slots
+        end
+
+        def columns(columns=[])
+            (0..6).each { |n| columns << get_column(n) }
+            columns
+        end
+
         def get_column(n, slots=[])
             @slots.each do |row|
                 slots << row[n]
@@ -16,34 +25,33 @@ module ConnectFour
             slots
         end
 
-        def get_diagonals
+        def diagonals
             diagonals = []
 
-            @slots.each_with_index do |row, i|
-                slots.each_with_index do |slot, j|
+            rows.each_with_index do |row, i|
+                row.each_with_index do |slot, j|
                     break if i > 2
 
                     if j <= 3
                         diagonal = []
-                        diagonal << slots[i][j]
-                        (1..3).each { |n| diagonal << slots[i + n][j + n] }
+                        diagonal << rows[i][j]
+                        (1..3).each { |n| diagonal << rows[i + n][j + n] }
                         
                         diagonals << diagonal
                     end
 
                     if j >= 3
                         diagonal = []
-                        diagonal << slots[i][j]
-                        (1..3).each { |n| diagonal << slots[i + n][j - n] }
+                        diagonal << rows[i][j]
+                        (1..3).each { |n| diagonal << rows[i + n][j - n] }
                       
                         diagonals << diagonal
                     end
-                    
                 end
-                
             end
 
-            diagonals.select {|diagonal| diagonal.length == 4}
+
+            diagonals
         end
 
         def find_open_slot(n)
@@ -57,19 +65,12 @@ module ConnectFour
         end
 
         def winner?
-            @slots.each do |row|
-                return true if has_four_in_a_row?(row)
+            [rows, columns, diagonals].each do |direction|
+                direction.each do |line|
+                    return true if has_four_in_a_row?(line)
+                end
             end
-
-            (0..6).each do |n|
-                column = get_column(n)
-                return true if has_four_in_a_row?(column)
-            end
-
-            get_diagonals.each do |diagonal|
-                return true if has_four_in_a_row?(diagonal)
-            end
-
+            
 
             false
         end

@@ -22,6 +22,24 @@ describe Board do
         end
     end
 
+    describe "#rows" do
+        it "returns every row" do
+            expect(board.rows).to eql(Array.new(Array.new(6) { Array.new(7) { slot } })) 
+        end
+    end
+
+    describe "#columns" do
+        it "returns every column" do
+            expect(board.columns).to eql(Array.new(7) { Array.new(6) { slot } })
+        end
+    end
+
+    describe "diagonals" do
+        it "gets every diagonal" do
+            expect(board.diagonals).to eql(Array.new(24) { Array.new(4) { slot } })
+        end
+    end
+
     describe "#get_column" do
 
         it "returns the squares in a column" do
