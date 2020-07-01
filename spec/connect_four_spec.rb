@@ -34,8 +34,8 @@ describe Board do
         end
     end
 
-    describe "diagonals" do
-        it "gets every diagonal" do
+    describe "#diagonals" do
+        it "returns every diagonal" do
             expect(board.diagonals).to eql(Array.new(24) { Array.new(4) { slot } })
         end
     end
@@ -71,7 +71,7 @@ describe Board do
             allow(target_slot).to receive(:color=)
         end
 
-        context "when column is empty" do
+        context "when a column is empty" do
 
             it "drops a piece to the bottom" do
                 board.slots[5][0] = target_slot
@@ -79,7 +79,7 @@ describe Board do
                 expect(board.drop_piece(0, "yellow")).to eql(target_slot)
             end
         end
-        context "when a piece is already in the column" do
+        context "when pieces are already in the column" do
 
             it "drops a piece on top of the other pieces" do
                 board.slots[4..5].each { |row| row[0] = red_slot }
@@ -92,21 +92,21 @@ describe Board do
 
     describe "#winner?" do
         context "when there is a winner" do
-            context "when horizontal win" do
+            context "when there is a horizontal win" do
                 it "returns true" do
                     (2..5).each { |n| board.slots[0][n] = red_slot }
                 
                     expect(board.winner?).to eql(true)
                 end
             end
-            context "when vertical win" do
+            context "when there is a vertical win" do
                 it "returns true" do
                     board.slots[0..3].map! { |row| row[0] = red_slot }
                     
                     expect(board.winner?).to eql(true)
                 end
             end
-            context "when diagonal win" do
+            context "when there is a diagonal win" do
                 it "returns true" do
                     (0..3).each { |n| board.slots[n][n] = red_slot }
                     
