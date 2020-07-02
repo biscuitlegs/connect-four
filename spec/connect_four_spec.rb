@@ -142,6 +142,39 @@ describe Board do
         end
     end
 
+    describe "#show" do
+        before { allow(board).to receive(:print) }
+
+        context "when the board is empty" do
+            it "shows an empty board" do
+                expect(board.show).to eql(
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n"
+                )
+            end
+        end
+
+        context "when the board has pieces" do
+            it "shows the pieces on the board" do
+                board.slots[5][0] = red_slot
+                board.slots[4][0] = yellow_slot
+
+                expect(board.show).to eql(
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " #  #  #  #  #  #  # \n" +
+                    " Y  #  #  #  #  #  # \n" +
+                    " R  #  #  #  #  #  # \n"
+                )
+            end
+        end
+    end
+
 end
 
 describe Slot do
@@ -173,10 +206,11 @@ describe Slot do
 end
 
 describe Player do
+    let(:player) { Player.new }
+
     describe "#initialize" do
         context "when no name is given" do
-            let(:player) { Player.new }
-
+            
             it "is named 'player' by default" do
                 expect(player.name).to eql("player")
             end
@@ -189,24 +223,58 @@ describe Player do
                 expect(player.name).to eql("Jeff")
             end
         end
+
+        context "when no color is given" do
+            it "is red by default" do
+                expect(player.color).to eql("red")
+            end
+        end
+
+        context "when a color is given" do
+            let(:player) { Player.new("Dave", "yellow") }
+            it "is the given color" do
+                expect(player.color).to eql("yellow")
+            end
+        end
+        
     end
 end
 
 describe Game do
-    describe "#initialize" do
-        context "when no board or players are given" do
-            let(:game) { Game.new }
+    let(:game) { Game.new }
+    let(:player_one) { double("player one") }
+    let(:player_two) { double("player two") }
+    let(:board) { double("board") }
 
+    before do
+        allow(game).to receive(:puts)
+        allow(game).to receive(:print)
+        allow(player_one).to receive(:color).and_return("red")
+        allow(player_two).to receive(:color).and_return("yellow")
+        allow(player_one).to receive(:name).and_return("Dave")
+        allow(player_two).to receive(:name).and_return("Jeff")
+        [player_one, player_two].each do |player|
+            allow(player).to receive(:name=)
+            allow(player).to receive(:color=)
+        end
+    end
+
+    describe "#initialize" do
+        before do
+        allow(board).to receive(:class).and_return(Board)
+        allow(player_one).to receive(:class).and_return(Player)
+        allow(player_two).to receive(:class).and_return(Player)
+        end
+
+        context "when no board or players are given" do
+            
             it "uses default board and players" do
-                expect(game.board.class).to eql(Board)
-                expect(game.player_one.class).to eql(Player)
-                expect(game.player_two.class).to eql(Player)
+                expect(game.board).to be_a(Board)
+                expect(game.player_one).to be_a(Player)
+                expect(game.player_two).to be_a(Player)
             end
         end
         context "when a board or players are given" do
-            let(:board) { Board.new }
-            let(:player_one) { Player.new }
-            let(:player_two) { Player.new }
             let(:game) { Game.new(board, player_one, player_two) }
 
             it "uses the given board and players" do
@@ -216,4 +284,63 @@ describe Game do
             end
         end
     end
+
+    describe "#start" do
+        before do 
+            allow(game).to receive(:gets).and_return("Dave", "Jeff", "0", "0")
+            allow(game.board).to receive(:show)
+        end
+    
+        it "gets the players' names" do
+            game.start
+            expect(player_one.name).to eql("Dave")
+            expect(player_two.name).to eql("Jeff")
+        end
+
+        it "assigns the players' colors" do
+            game.start
+            expect(player_one.color).to eql("red")
+            expect(player_two.color).to eql("yellow")
+        end
+        
+        it "tells the players about the game" do
+            expect(game).to receive(:start_message)
+            game.start
+        end
+
+        it "lets each player play a round" do
+            expect(game).to receive(:play_round)
+            game.start
+        end
+    
+    end
+
+    describe "#play_round" do
+        let(:board) { Board.new }
+        let(:game) { Game.new(board, player_one, player_two) }
+        before do 
+            allow(game).to receive(:gets).and_return("0")
+            allow(game.board).to receive(:show)
+        end
+
+        context "when the players select valid columns" do
+            it "lets both players drop a piece" do
+                game.play_round
+        
+                expect(game.board.slots[5][0].color).to eql("red")
+                expect(game.board.slots[4][0].color).to eql("yellow")
+            end
+        end
+        context "when a player selects an invalid column" do
+            before { allow(game).to receive(:gets).and_return("11", "0") }
+            
+            it "asks for a different column" do
+                game.play_round
+        
+                expect(game.board.slots[5][0].color).to eql("red")
+                expect(game.board.slots[4][0].color).to eql("yellow")
+            end
+        end
+    end
+
 end
