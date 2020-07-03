@@ -1,5 +1,3 @@
-require 'pry'
-
 module ConnectFour
     class Board
         attr_reader :slots
@@ -64,6 +62,10 @@ module ConnectFour
             slot
         end
 
+        def gameover?
+            winner? || stalemate? ? true : false
+        end
+
         def winner?
             [rows, columns, diagonals].each do |direction|
                 direction.each do |line|
@@ -100,13 +102,27 @@ module ConnectFour
             board_string
         end
 
+        def get_winning_color
+            [rows, columns, diagonals].each do |direction|
+                direction.each do |line|
+                    if has_four_in_a_row?(line)
+                        groups = line.group_by { |c| c.color }
+                        return groups.find { |k, v | v.length == 4 }[0]
+                    end
+                end
+            end
+            
+
+            nil
+        end
+
 
         private
 
         def has_four_in_a_row?(array, &block)
             array.each_with_index do |item, index|
                 array.length == 4 ? four = array : four = array[index..index + 3]
-                break if index > 3
+                break if index + 4 > array.length
                 return true if four.all? { |slot| slot.color == "red" }
                 return true if four.all? { |slot| slot.color == "yellow" }
             end
@@ -146,22 +162,16 @@ module ConnectFour
         end
 
         def start
-            [@player_one, @player_two].each_with_index do |player, index|
-                default_names = ["Player one", "Player two"]
-                puts "#{default_names[index]}, please enter your name:"
-                player.name = gets.chomp
-                print "\n"
-            end
-
-            @player_two.color = "yellow"
+            set_player_names([@player_one, @player_two])
+            set_player_colors([@player_one, @player_two])
             puts start_message
-
-            play_round
+            play_round until board.gameover?
+            puts gameover_message
         end
 
         def play_round
             [@player_one, @player_two].each do |player|
-                
+                break if board.gameover?
                 @board.drop_piece(get_valid_column(player), player.color)
 
                 print "\n"
@@ -169,11 +179,24 @@ module ConnectFour
                 @board.show
                 print "\n"
             end
-
         end
 
        
         private
+
+        def set_player_colors(players)
+            players[0].color = "red"
+            players[1].color = "yellow"
+        end
+
+        def set_player_names(players)
+            players.each_with_index do |player, index|
+                default_names = ["Player one", "Player two"]
+                puts "#{default_names[index]}, please enter your name:"
+                player.name = gets.chomp
+                print "\n"
+            end
+        end
 
         def get_valid_column(player)
             puts "#{player.name}, please enter a column to drop a piece in (0 - 6):"
@@ -201,6 +224,15 @@ module ConnectFour
 
         def start_message
             "#{@player_one.name} will be #{@player_one.color} and #{@player_two.name} will be #{@player_two.color}.\n\n"
+        end
+
+        def gameover_message
+            if @board.winner?
+                winning_player = [player_one, player_two].find { |player| player.color == board.get_winning_color }
+                "Congrats #{winning_player.name}! You won!"
+            else
+                "Looks like the game ended in a stalemate this time!"
+            end
         end
     end
 end

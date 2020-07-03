@@ -1,5 +1,7 @@
 require_relative "../lib/connect_four"
+require_relative "../lib/board_tools"
 include ConnectFour
+include BoardTools
 
 describe Board do
     let(:slot) { double("slot") }
@@ -15,7 +17,6 @@ describe Board do
     
 
     describe "#initialize" do
-
         it "creates the correct number of squares" do
             expect(board.slots.length).to eql(6)
             board.slots.each { |row| expect(row).to eql(Array.new(7) { slot }) }
@@ -41,7 +42,6 @@ describe Board do
     end
 
     describe "#get_column" do
-
         it "returns the squares in a column" do
             column_slot = double("column_slot")
             board.slots.each { |row| row[0] = column_slot }
@@ -51,11 +51,10 @@ describe Board do
     end
 
     describe "#find_open_slot" do
+        let(:open_slot) { double("open_slot") }
+        before { allow(open_slot).to receive(:color).and_return(nil) }
 
         it "returns the first open slot in a column" do
-            open_slot = double("open_slot")
-            allow(open_slot).to receive(:color).and_return(nil)
-            
             board.slots[4..5].each { |row| row[0] = red_slot }
             board.slots[3][0] = open_slot
 
@@ -65,14 +64,12 @@ describe Board do
 
     describe "#drop_piece" do
         let(:target_slot) { double("target slot") }
-
         before do
             allow(target_slot).to receive(:color).and_return(nil)
             allow(target_slot).to receive(:color=)
         end
 
         context "when a column is empty" do
-
             it "drops a piece to the bottom" do
                 board.slots[5][0] = target_slot
         
@@ -80,7 +77,6 @@ describe Board do
             end
         end
         context "when pieces are already in the column" do
-
             it "drops a piece on top of the other pieces" do
                 board.slots[4..5].each { |row| row[0] = red_slot }
                 board.slots[3][0] = target_slot
@@ -90,25 +86,48 @@ describe Board do
         end
     end
 
+    describe "#gameover?" do
+        context "when the game is over" do
+            context "when there is a winner" do
+                it "returns true" do
+                    set_horizontal_win(board)
+                    expect(board.gameover?).to eql(true)
+                end
+            end
+            context "when there is a stalemate" do
+                it "returns true" do
+                    set_stalemate(board)
+
+                    expect(board.gameover?).to eql(true)
+                end
+            end
+            context "when there is no winner or stalemate" do
+                it "returns false" do
+                    expect(board.gameover?).to eql(false)
+                end
+            end
+        end
+    end
+
     describe "#winner?" do
         context "when there is a winner" do
             context "when there is a horizontal win" do
                 it "returns true" do
-                    (2..5).each { |n| board.slots[0][n] = red_slot }
+                    set_horizontal_win(board)
                 
                     expect(board.winner?).to eql(true)
                 end
             end
             context "when there is a vertical win" do
                 it "returns true" do
-                    board.slots[0..3].map! { |row| row[0] = red_slot }
+                    set_vertical_win(board)
                     
                     expect(board.winner?).to eql(true)
                 end
             end
             context "when there is a diagonal win" do
                 it "returns true" do
-                    (0..3).each { |n| board.slots[n][n] = red_slot }
+                    set_diagonal_win(board)
                     
                     expect(board.winner?).to eql(true)
                 end
@@ -124,13 +143,7 @@ describe Board do
     describe "#stalemate?" do
         context "when there is a stalemate" do
             it "returns true" do
-                board.slots.each_with_index do |row, index|
-                    if index.even?
-                        board.slots[index] = [yellow_slot, yellow_slot, yellow_slot, red_slot, red_slot, red_slot, yellow_slot]
-                    else
-                        board.slots[index] = [red_slot, red_slot, red_slot, yellow_slot, yellow_slot, yellow_slot, red_slot]
-                    end
-                end
+                set_stalemate(board)
 
                 expect(board.stalemate?).to eql(true)
             end
@@ -175,6 +188,21 @@ describe Board do
         end
     end
 
+    describe "#get_winning_color" do
+        context "when there is a winner" do
+            it "returns the winning color" do
+                set_horizontal_win(board)
+
+                expect(board.get_winning_color).to eql("red")
+            end
+        end
+        context "when there is no winner" do
+            it "returns nil" do
+                expect(board.get_winning_color).to eql(nil)
+            end
+        end
+    end
+
 end
 
 describe Slot do
@@ -186,7 +214,6 @@ describe Slot do
                 expect(slot.color).to eql(nil)
             end
         end
-
         context "when a color is given" do
             let(:slot) { Slot.new("red") }
 
@@ -215,7 +242,6 @@ describe Player do
                 expect(player.name).to eql("player")
             end
         end
-
         context "when a name is given" do
             let(:player) { Player.new("Jeff") }
 
@@ -223,13 +249,11 @@ describe Player do
                 expect(player.name).to eql("Jeff")
             end
         end
-
         context "when no color is given" do
             it "is red by default" do
                 expect(player.color).to eql("red")
             end
         end
-
         context "when a color is given" do
             let(:player) { Player.new("Dave", "yellow") }
             it "is the given color" do
@@ -242,32 +266,19 @@ end
 
 describe Game do
     let(:game) { Game.new }
-    let(:player_one) { double("player one") }
-    let(:player_two) { double("player two") }
-    let(:board) { double("board") }
+    let(:player_one) { Player.new }
+    let(:player_two) { Player.new }
+    let(:board) { Board.new }
 
     before do
         allow(game).to receive(:puts)
         allow(game).to receive(:print)
-        allow(player_one).to receive(:color).and_return("red")
-        allow(player_two).to receive(:color).and_return("yellow")
-        allow(player_one).to receive(:name).and_return("Dave")
-        allow(player_two).to receive(:name).and_return("Jeff")
-        [player_one, player_two].each do |player|
-            allow(player).to receive(:name=)
-            allow(player).to receive(:color=)
-        end
+        allow(game).to receive(:gets).and_return("Dave", "Jeff", "0", "1", "0", "1", "0", "1", "0", "1")
+        allow(game.board).to receive(:show)
     end
 
     describe "#initialize" do
-        before do
-        allow(board).to receive(:class).and_return(Board)
-        allow(player_one).to receive(:class).and_return(Player)
-        allow(player_two).to receive(:class).and_return(Player)
-        end
-
         context "when no board or players are given" do
-            
             it "uses default board and players" do
                 expect(game.board).to be_a(Board)
                 expect(game.player_one).to be_a(Player)
@@ -286,18 +297,15 @@ describe Game do
     end
 
     describe "#start" do
-        before do 
-            allow(game).to receive(:gets).and_return("Dave", "Jeff", "0", "0")
-            allow(game.board).to receive(:show)
-        end
-    
-        it "gets the players' names" do
+        let(:game) { Game.new(board, player_one, player_two) }
+
+        it "sets the players' names" do
             game.start
             expect(player_one.name).to eql("Dave")
             expect(player_two.name).to eql("Jeff")
         end
 
-        it "assigns the players' colors" do
+        it "sets the players' colors" do
             game.start
             expect(player_one.color).to eql("red")
             expect(player_two.color).to eql("yellow")
@@ -308,16 +316,23 @@ describe Game do
             game.start
         end
 
-        it "lets each player play a round" do
-            expect(game).to receive(:play_round)
+        it "plays rounds until the game is over" do
+            game.start
+            expect(game.board.gameover?).to eql(true)
+        end
+
+        it "tells players that the game is over" do
+            expect(game).to receive(:gameover_message)
             game.start
         end
     
     end
 
     describe "#play_round" do
-        let(:board) { Board.new }
+        let(:player_one) { Player.new("Dave", "red") }
+        let(:player_two) { Player.new("Jeff", "yellow") }
         let(:game) { Game.new(board, player_one, player_two) }
+
         before do 
             allow(game).to receive(:gets).and_return("0")
             allow(game.board).to receive(:show)
@@ -342,5 +357,4 @@ describe Game do
             end
         end
     end
-
 end
