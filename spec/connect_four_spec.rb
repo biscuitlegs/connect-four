@@ -160,14 +160,13 @@ describe Board do
 
         context "when the board is empty" do
             it "shows an empty board" do
-                expect(board.show).to eql(
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n"
-                )
+                expect(board.show).to eql(" ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n"
+                                        )
             end
         end
 
@@ -176,14 +175,14 @@ describe Board do
                 board.slots[5][0] = red_slot
                 board.slots[4][0] = yellow_slot
 
-                expect(board.show).to eql(
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " #  #  #  #  #  #  # \n" +
-                    " Y  #  #  #  #  #  # \n" +
-                    " R  #  #  #  #  #  # \n"
-                )
+                expect(board.show).to eql(" ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ⚫  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ♌  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n" +
+                                          " ♈  ⚫  ⚫  ⚫  ⚫  ⚫  ⚫ \n"
+                                        )
+                    
             end
         end
     end

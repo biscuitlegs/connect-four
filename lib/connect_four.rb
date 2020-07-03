@@ -87,11 +87,11 @@ module ConnectFour
             @slots.each do |row|
                 row.each_with_index do |slot, index|
                     if slot.color == "yellow"
-                        board_string << " Y "
+                        board_string << " \u264c "
                     elsif slot.color == "red"
-                        board_string << " R "
+                        board_string << " \u2648 "
                     else
-                        board_string << " # "
+                        board_string << " \u26ab "
                     end
 
                     board_string << "\n" if index == 6
